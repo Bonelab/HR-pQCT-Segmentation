@@ -1,0 +1,21 @@
+name: blptl
+channels:
+  - defaults
+dependencies:
+  - pandas
+  - torchmetrics
+  - jupyterlab
+  - torchvision
+  - matplotlib
+  - n88tools
+  - scikit-learn
+  - simpleitk
+  - pytorch-lightning
+  - pytorch
+  - h5py
+  - scipy
+  - vtk
+  - scikit-image
+  - statsmodels
+  - seaborn
+prefix: /Users/nathanneeteson/opt/anaconda3/envs/blptl
