@@ -212,7 +212,7 @@ def main():
         cort_mask = (phi_peri < 0) * (phi_endo > 0)
         trab_mask = phi_endo < 0
 
-        cort_mask_post, trab_mask_post = postprocess_masks_iterative2(
+        cort_mask_post, trab_mask_post = postprocess_masks_iterative(
             image_data, cort_mask, trab_mask, visualize=args.visualize
         )
 
