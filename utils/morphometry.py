@@ -142,28 +142,21 @@ def calc_mean_thickness(mask, voxel_width, Tmin, segments=None, overlap=None):
     # I devised a convenient way to do this discretely, since I don't really
     # see a way to calculate a continuous cumulative PDF, or integrate it
 
-    # first, find the proportion of cells with local thickness < Tmin,
-    # this is F(Tmin)
-
-    F_Tmin = np.sum(((local_thickness > 0) & (local_thickness < Tmin)).flatten()) \
-             / (np.sum((local_thickness > 0).flatten()) + EPS)
-
-    # next, set the local thickness to a minimum of Tmin
+    # set the local thickness to a minimum of Tmin
 
     local_thickness[local_thickness > 0] = \
         np.maximum(local_thickness[local_thickness > 0], Tmin)
 
-    # finally, we can now take the average of all of the local thicknesses
-    # and multiply by the adjustment factor
+    # finally, we can now take the average of all the local thicknesses
 
-    mean_thickness = (1 / (1 - F_Tmin)) * (np.mean(local_thickness[local_thickness > 0].flatten()))
+    mean_thickness = np.mean(local_thickness[local_thickness > 0].flatten())
 
     # to get the standard deviation of thickness, we calculate the second
     # moment of the distribution and take the square root:
 
     mean_thickness_std = \
         np.sqrt(
-            np.sum((local_thickness[local_thickness > 0] - mean_thickness) ** 2) \
+            np.sum((local_thickness[local_thickness > 0] - mean_thickness) ** 2)
             / (np.sum((local_thickness > 0).flatten()) + 1e-8)
         )
 
