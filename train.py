@@ -5,10 +5,7 @@ Training a U-Net on dataset of segmented images.
 
 # IMPORTS
 import os
-import sys
 import yaml
-
-from datetime import datetime
 
 import torch
 from torch.nn import DataParallel
@@ -21,10 +18,11 @@ from utils.error_metrics import (
     HRpQCTEmbeddingCombinedRegularizationLoss,
     create_calculate_embedding_dice_coefficient
 )
-from utils.bone_contouring_dataset import (
-    SamplePadder, SampleToTensors, SampleStandardizer,
-    HRpQCT_AIM_Dataset, SingleImageDataset
-)
+
+from dataset.SamplePadder import SamplePadder
+from dataset.SampleStandardizer import SampleStandardizer
+from dataset.SampleToTensors import SampleToTensors
+from dataset.HRpQCTAIMDataset import HRpQCTAIMDataset
 from utils.optimizer_scheduling import OptimizerSchedulerLinear
 from utils.logging import Logger
 
@@ -78,8 +76,8 @@ def main():
     ])
 
     # create datasets
-    training_dataset = HRpQCT_AIM_Dataset(args.training_data_dir, transform=data_transforms)
-    validation_dataset = HRpQCT_AIM_Dataset(args.validation_data_dir, transform=data_transforms)
+    training_dataset = HRpQCTAIMDataset(args.training_data_dir, transform=data_transforms)
+    validation_dataset = HRpQCTAIMDataset(args.validation_data_dir, transform=data_transforms)
 
     # construct dictionary of testing functions
     testing_functions = {

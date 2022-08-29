@@ -1,14 +1,15 @@
-'''
+"""
 Written by Nathan Neeteson.
 A set of utilities for calculating errors and losses on model outputs.
-'''
+"""
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def calc_multiclass_dice_coeff(seg1,seg2):
+
+def calc_multiclass_dice_coeff(seg1, seg2):
     # seg1 and seg2 are pytorch tensors with dimensions: (batch,class,width,height)
     # this function assumes that the classes are labelled with integers in a
     # single class channel
@@ -16,18 +17,18 @@ def calc_multiclass_dice_coeff(seg1,seg2):
     seg1 = seg1.cpu().detach().numpy().flatten()
     seg2 = seg2.cpu().detach().numpy().flatten()
 
-    num_classes = max(max(seg1),max(seg2))
+    num_classes = max(max(seg1), max(seg2))
 
     D = 0
 
     for c in range(num_classes):
+        X = seg1 == c
+        Y = seg2 == c
 
-        X = seg1==c
-        Y = seg2==c
+        D += 2 * np.sum(X & Y) / (np.sum(X) + np.sum(Y) + 1e-8)
 
-        D += 2 * np.sum(X&Y) / (np.sum(X) + np.sum(Y) + 1e-8)
+    return D / num_classes
 
-    return D/num_classes
 
 def zero_crossings(x):
     # this function takes in a torch tensor and outputs a new torch tensor,
@@ -41,18 +42,18 @@ def zero_crossings(x):
     # the first check is if x is actually 0, if that is the case then that is
     # obviously a zero crossing. we can do this while creating the zero crossing
     # tensor - and we will crop it because the next step will crop a layer
-    z = (sgnx==0)[:,:,1:-1,1:-1]
+    z = (sgnx == 0)[:, :, 1:-1, 1:-1]
 
     # now we will check each direct neighbour of each voxel. if the sign of the
     # neighbour does not match, then the voxel is a zero-crossing
-    z += sgnx[:,:,1:-1,1:-1] != sgnx[:,:, 1:-1, 2:  ]
-    z += sgnx[:,:,1:-1,1:-1] != sgnx[:,:, 1:-1,  :-2]
-    z += sgnx[:,:,1:-1,1:-1] != sgnx[:,:, 2:  , 1:-1]
-    z += sgnx[:,:,1:-1,1:-1] != sgnx[:,:,  :-2, 1:-1]
+    z += sgnx[:, :, 1:-1, 1:-1] != sgnx[:, :, 1:-1, 2:]
+    z += sgnx[:, :, 1:-1, 1:-1] != sgnx[:, :, 1:-1, :-2]
+    z += sgnx[:, :, 1:-1, 1:-1] != sgnx[:, :, 2:, 1:-1]
+    z += sgnx[:, :, 1:-1, 1:-1] != sgnx[:, :, :-2, 1:-1]
 
     # finally, convert z back to boolean since we just want to detect locations
     # of zero crossings and not count how many occur at a voxel
-    return z>0
+    return z > 0
 
 
 # this code is from: https://www.kaggle.com/bigironsphere/loss-function-library-keras-pytorch
@@ -62,27 +63,28 @@ class DiceLoss(nn.Module):
         super(DiceLoss, self).__init__()
 
     def forward(self, inputs, targets, smooth=1):
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.softmax(inputs, dim=1)
 
-        #comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.softmax(inputs,dim=1)
-
-        #flatten label and prediction tensors
+        # flatten label and prediction tensors
         inputs = inputs.view(-1)
         targets = targets.view(-1)
 
         intersection = (inputs * targets).sum()
-        dice = (2.*intersection + smooth)/((inputs*inputs).sum() + (targets*targets).sum() + smooth)
+        dice = (2. * intersection + smooth) / ((inputs * inputs).sum() + (targets * targets).sum() + smooth)
 
         return 1 - dice
+
 
 def create_approximate_heaviside(epsilon):
     # factory function for creating an approximate heaviside function with a
     # scaling factor of epsilon
 
     def approximate_heaviside(x):
-        return ( 1/2 + (1/np.pi)*torch.atan(x/epsilon) )
+        return 1 / 2 + (1 / np.pi) * torch.atan(x / epsilon)
 
     return approximate_heaviside
+
 
 def create_convert_embeddings_to_predictions(epsilon):
     # factory function to make a function that converts the embeddings for the
@@ -92,17 +94,16 @@ def create_convert_embeddings_to_predictions(epsilon):
     heaviside = create_approximate_heaviside(epsilon)
 
     def convert_embeddings_to_predictions(embeddings):
-
-        phi_peri, phi_endo = embeddings[:,0,:,:], embeddings[:,1,:,:]
+        phi_peri, phi_endo = embeddings[:, 0, :, :], embeddings[:, 1, :, :]
 
         # convert surface embeddings into voxel-wise class predictions
-        pred_cort = heaviside(-phi_peri)*heaviside(phi_endo)
+        pred_cort = heaviside(-phi_peri) * heaviside(phi_endo)
         pred_trab = heaviside(-phi_endo)
         pred_back = heaviside(phi_peri)
 
         # stack predictions, normalize and take log to get log-probabilities
-        preds = torch.stack((pred_cort,pred_trab,pred_back),dim=1)
-        preds = preds / torch.sum(preds,dim=1,keepdim=True)
+        preds = torch.stack((pred_cort, pred_trab, pred_back), dim=1)
+        preds = preds / torch.sum(preds, dim=1, keepdim=True)
         preds = torch.log(preds)
 
         return preds
@@ -118,13 +119,12 @@ def create_calculate_embedding_dice_coefficient(epsilon):
     convert_embeddings_to_predictions = \
         create_convert_embeddings_to_predictions(epsilon)
 
-    def calculate_embedding_dice_coefficient(embeddings,labels):
-
+    def calculate_embedding_dice_coefficient(embeddings, labels):
         preds = convert_embeddings_to_predictions(embeddings)
 
-        preds = torch.argmax(preds,dim=1)
+        preds = torch.argmax(preds, dim=1)
 
-        return calc_multiclass_dice_coeff(preds,labels)
+        return calc_multiclass_dice_coeff(preds, labels)
 
     return calculate_embedding_dice_coefficient
 
@@ -137,6 +137,7 @@ def create_approximate_delta(epsilon):
         return abs(x) < epsilon
 
     return approximate_delta
+
 
 class CurvatureLoss(nn.Module):
     # class defining a loss function based on the curvature in the vicinity of
@@ -179,9 +180,9 @@ class CurvatureLoss(nn.Module):
 
         ddx_kernel = np.array(
             [
-                [   0,  0,   0],
-                [-1/2,  0, 1/2],
-                [   0,  0,   0]
+                [0, 0, 0],
+                [-1 / 2, 0, 1 / 2],
+                [0, 0, 0]
             ]
         )
 
@@ -199,9 +200,9 @@ class CurvatureLoss(nn.Module):
 
         ddy_kernel = np.array(
             [
-                [0, -1/2, 0],
-                [0, 0,    0],
-                [0,  1/2, 0]
+                [0, -1 / 2, 0],
+                [0, 0, 0],
+                [0, 1 / 2, 0]
             ]
         )
 
@@ -219,9 +220,9 @@ class CurvatureLoss(nn.Module):
 
         d2dx2_kernel = np.array(
             [
-                [0,  0, 0],
+                [0, 0, 0],
                 [1, -2, 1],
-                [0,  0, 0]
+                [0, 0, 0]
             ]
         )
 
@@ -239,9 +240,9 @@ class CurvatureLoss(nn.Module):
 
         d2dy2_kernel = np.array(
             [
-                [0,  1, 0],
+                [0, 1, 0],
                 [0, -2, 0],
-                [0,  1, 0]
+                [0, 1, 0]
             ]
         )
 
@@ -260,9 +261,9 @@ class CurvatureLoss(nn.Module):
 
         d2dxdy_kernel = np.array(
             [
-                [ 1/4,  0, -1/4],
-                [   0,  0,    0],
-                [-1/4,  0,  1/4]
+                [1 / 4, 0, -1 / 4],
+                [0, 0, 0],
+                [-1 / 4, 0, 1 / 4]
             ]
         )
 
@@ -279,17 +280,17 @@ class CurvatureLoss(nn.Module):
         self.d2dxdy = torch.tensor(d2dxdy_kernel).unsqueeze(0).unsqueeze(0).float().to(device)
 
     def forward(self, phi):
-
         # compute all the required spatial gradients
-        dphidx = F.conv2d(phi,self.ddx)/self.vox_width
-        dphidy = F.conv2d(phi,self.ddy)/self.vox_width
-        d2phidx2 = F.conv2d(phi,self.d2dx2)/(self.vox_width**2)
-        d2phidy2 = F.conv2d(phi,self.d2dy2)/(self.vox_width**2)
-        d2phidxdy = F.conv2d(phi,self.d2dxdy)/(self.vox_width**2)
+        dphidx = F.conv2d(phi, self.ddx) / self.vox_width
+        dphidy = F.conv2d(phi, self.ddy) / self.vox_width
+        d2phidx2 = F.conv2d(phi, self.d2dx2) / (self.vox_width ** 2)
+        d2phidy2 = F.conv2d(phi, self.d2dy2) / (self.vox_width ** 2)
+        d2phidxdy = F.conv2d(phi, self.d2dxdy) / (self.vox_width ** 2)
 
         # compute the numerator and denominator of the curvature expression
-        H_numerator = d2phidx2*torch.pow(dphidy,2) - 2*dphidy*dphidx*d2phidxdy + d2phidy2*torch.pow(dphidx,2)
-        H_denominator = torch.pow((torch.pow(dphidx,2) + torch.pow(dphidy,2)),3/2)
+        H_numerator = d2phidx2 * torch.pow(dphidy, 2) - 2 * dphidy * dphidx * d2phidxdy + d2phidy2 * torch.pow(dphidx,
+                                                                                                               2)
+        H_denominator = torch.pow((torch.pow(dphidx, 2) + torch.pow(dphidy, 2)), 3 / 2)
 
         # compute the curvature field
         H = H_numerator / (H_denominator + self.eps)
@@ -298,7 +299,7 @@ class CurvatureLoss(nn.Module):
         # threshold, subtract 1 from that, and apply a rectified linear unit.
         # we do this because we do not want there to be any penalty for curvature
         # that is within acceptable bounds, only excess curvature
-        H_relu = F.relu(torch.pow(H/(self.H_thresh+self.eps),2)-1)
+        H_relu = F.relu(torch.pow(H / (self.H_thresh + self.eps), 2) - 1)
 
         # detect the zero crossings in phi
         phi_zero = zero_crossings(phi)
@@ -308,8 +309,7 @@ class CurvatureLoss(nn.Module):
         # where the zero level set has been determined as the voxels where
         # the level set crosses zero
 
-        return torch.sum(phi_zero*H_relu) / (torch.sum(phi_zero) + self.eps)
-
+        return torch.sum(phi_zero * H_relu) / (torch.sum(phi_zero) + self.eps)
 
 
 class MagnitudeGradientLoss(nn.Module):
@@ -341,9 +341,9 @@ class MagnitudeGradientLoss(nn.Module):
 
         ddx_kernel = np.array(
             [
-                [   0,  0,   0],
-                [-1/2,  0, 1/2],
-                [   0,  0,   0]
+                [0, 0, 0],
+                [-1 / 2, 0, 1 / 2],
+                [0, 0, 0]
             ]
         )
 
@@ -361,9 +361,9 @@ class MagnitudeGradientLoss(nn.Module):
 
         ddy_kernel = np.array(
             [
-                [0, -1/2, 0],
-                [0, 0,    0],
-                [0,  1/2, 0]
+                [0, -1 / 2, 0],
+                [0, 0, 0],
+                [0, 1 / 2, 0]
             ]
         )
 
@@ -375,16 +375,16 @@ class MagnitudeGradientLoss(nn.Module):
         self.ddy = torch.tensor(ddy_kernel).unsqueeze(0).unsqueeze(0).float().to(device)
 
     def forward(self, phi):
-
         # compute the required spatial gradients
-        dphidx = F.conv2d(phi,self.ddx)/self.vox_width
-        dphidy = F.conv2d(phi,self.ddy)/self.vox_width
+        dphidx = F.conv2d(phi, self.ddx) / self.vox_width
+        dphidy = F.conv2d(phi, self.ddy) / self.vox_width
 
         # calculate the magnitude gradient field of phi
-        maggradphi = torch.sqrt(torch.pow(dphidx,2)+torch.pow(dphidy,2)+self.eps)
+        maggradphi = torch.sqrt(torch.pow(dphidx, 2) + torch.pow(dphidy, 2) + self.eps)
 
         # return the average magnitude gradient in the field as the loss
-        return torch.sum(maggradphi) / (torch.sum(torch.ones_like(maggradphi))+self.eps)
+        return torch.sum(maggradphi) / (torch.sum(torch.ones_like(maggradphi)) + self.eps)
+
 
 class MagnitudeGradientSDTLoss(nn.Module):
     # class defining a loss function based on the integrated magnitude of the
@@ -418,9 +418,9 @@ class MagnitudeGradientSDTLoss(nn.Module):
 
         ddx_kernel = np.array(
             [
-                [   0,  0,   0],
-                [-1/2,  0, 1/2],
-                [   0,  0,   0]
+                [0, 0, 0],
+                [-1 / 2, 0, 1 / 2],
+                [0, 0, 0]
             ]
         )
 
@@ -438,9 +438,9 @@ class MagnitudeGradientSDTLoss(nn.Module):
 
         ddy_kernel = np.array(
             [
-                [0, -1/2, 0],
-                [0, 0,    0],
-                [0,  1/2, 0]
+                [0, -1 / 2, 0],
+                [0, 0, 0],
+                [0, 1 / 2, 0]
             ]
         )
 
@@ -452,23 +452,23 @@ class MagnitudeGradientSDTLoss(nn.Module):
         self.ddy = torch.tensor(ddy_kernel).unsqueeze(0).unsqueeze(0).float().to(device)
 
     def forward(self, phi):
-
         # compute the required spatial gradients
-        dphidx = F.conv2d(phi,self.ddx)/self.vox_width
-        dphidy = F.conv2d(phi,self.ddy)/self.vox_width
+        dphidx = F.conv2d(phi, self.ddx) / self.vox_width
+        dphidy = F.conv2d(phi, self.ddy) / self.vox_width
 
         # calculate the magnitude gradient field of phi
-        maggradphi = torch.sqrt(torch.pow(dphidx,2)+torch.pow(dphidy,2)+self.eps)
+        maggradphi = torch.sqrt(torch.pow(dphidx, 2) + torch.pow(dphidy, 2) + self.eps)
 
         # then take the square of the log of the magnitude of the gradient of phi
-        sq_log_maggradphi = torch.pow(torch.log(maggradphi),2)
+        sq_log_maggradphi = torch.pow(torch.log(maggradphi), 2)
 
         # then get a map of where phi is not a zero crossing
         phi_not_zero = torch.logical_not(zero_crossings(phi))
 
         # then the loss will be the average of the square of the log of the
         # magnitude of the gradient of phi, everywhere that is not a zero crossing
-        return torch.sum(phi_not_zero*sq_log_maggradphi) / (torch.sum(phi_not_zero)+self.eps)
+        return torch.sum(phi_not_zero * sq_log_maggradphi) / (torch.sum(phi_not_zero) + self.eps)
+
 
 class HRpQCTEmbeddingNLLLoss(nn.Module):
 
@@ -479,21 +479,20 @@ class HRpQCTEmbeddingNLLLoss(nn.Module):
             create_convert_embeddings_to_predictions(heaviside_epsilon)
         self.loss = nn.NLLLoss()
 
-    def forward(self,embeddings,labels):
-
+    def forward(self, embeddings, labels):
         preds = self.convert_embeddings_to_predictions(embeddings)
 
-        return self.loss(preds,labels.squeeze(1))
+        return self.loss(preds, labels.squeeze(1))
+
 
 class HRpQCTEmbeddingCombinedRegularizationLoss(nn.Module):
 
-    def __init__(self,loss):
+    def __init__(self, loss):
         super(HRpQCTEmbeddingCombinedRegularizationLoss, self).__init__()
 
         self.loss = loss
 
-    def forward(self,embeddings,labels):
-
-        phi_peri, phi_endo = embeddings[:,[0],:,:], embeddings[:,[1],:,:]
+    def forward(self, embeddings, labels):
+        phi_peri, phi_endo = embeddings[:, [0], :, :], embeddings[:, [1], :, :]
 
         return self.loss(phi_peri) + self.loss(phi_endo)

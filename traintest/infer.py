@@ -6,7 +6,7 @@ Use a UNet model to infer a trabecular and cortical mask for an image.
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from utils.bone_contouring_dataset import SingleImageDataset
+from dataset.SingleImageDataset import SingleImageDataset
 
 
 def infer(

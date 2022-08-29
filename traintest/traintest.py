@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from utils.bone_contouring_dataset import SingleImageDataset
+from dataset.SingleImageDataset import SingleImageDataset
 from contextlib import nullcontext
 
 

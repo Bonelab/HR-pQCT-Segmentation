@@ -4,20 +4,15 @@ Segment images using a trained U-Net and optionally, compare to reference segmen
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 from torchvision.transforms import Compose
 from torch.utils.data import DataLoader
 
 from models.unet import UNet
-from utils.bone_contouring_dataset import (
-    SamplePadder, SampleToTensors, SampleStandardizer,
-    HRpQCT_AIM_Dataset, SingleImageDataset
-)
-from utils.postprocessing import (
-    postprocess_masks_iterative2, smooth_embedding_field_gaussian
-)
-from utils.image_viz import single_axis_image_and_masks
+from dataset.SamplePadder import SamplePadder
+from dataset.SampleStandardizer import SampleStandardizer
+from dataset.SampleToTensors import SampleToTensors
+from dataset.HRpQCTAIMDataset import HRpQCTAIMDataset
 from utils.logging import Logger
 
 from utils.segmentation_evaluation import (
