@@ -12,7 +12,7 @@ from torch.nn import DataParallel
 from torch.optim import AdamW
 from torchvision.transforms import Compose
 
-from models.unet import UNet
+from models.UNet import UNet
 from utils.error_metrics import (
     HRpQCTEmbeddingNLLLoss, CurvatureLoss, MagnitudeGradientSDTLoss,
     HRpQCTEmbeddingCombinedRegularizationLoss,

@@ -1,4 +1,5 @@
 from bonelab.util.aim_calibration_header import get_aim_density_equation
+import numpy as np
 import vtkbone
 import os
 from vtk.util.numpy_support import vtk_to_numpy
