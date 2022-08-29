@@ -1,14 +1,15 @@
 import argparse
 
+
 def check_odd_integer(value):
     ivalue = int(value)
-    if not(ivalue%2):
+    if not (ivalue % 2):
         raise argparse.ArgumentTypeError(f"{ivalue} is not a valid odd integer")
     return ivalue
 
+
 # PARSER CREATION FUNCTION
 def create_parser():
-
     parser = argparse.ArgumentParser(
         description='HRpQCT Segmentation 2D UNet Training Script',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter

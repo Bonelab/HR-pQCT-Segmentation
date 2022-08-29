@@ -6,6 +6,8 @@ Training a U-Net on dataset of segmented images.
 # IMPORTS
 import os
 import sys
+import yaml
+
 from datetime import datetime
 
 import torch
@@ -40,6 +42,10 @@ def main():
     for d in [args.log_dir, args.trained_model_dir]:
         if not (os.path.isdir(d)):
             os.mkdir(d)
+
+    # save the parsed args to a yaml file in the trained model directory
+    with open(os.path.join(args.trained_model_dir, f"{args.label}.yaml"), 'w') as outfile:
+        yaml.dump(vars(args), outfile)
 
     # assemble filenames for the trained model and the log file
     model_filename = f'{args.trained_model_dir}{args.label}.pth'
