@@ -129,8 +129,17 @@ dmypy.json
 .pyre/
 
 # Pytorch models
-.pth
+*.pth
 
 # Scanco AIM image files
-.aim
-.AIM
+*.aim
+*.AIM
+
+# data
+data/
+
+# logs
+logs/
+
+# trained models
+trained_models/
