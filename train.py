@@ -86,7 +86,7 @@ def main():
         'dice': create_calculate_embedding_dice_coefficient(args.heaviside_epsilon)
     }
 
-    # create optimizer kwards dict
+    # create optimizer kwargs dict
     optimizer_kwargs = {
         'lr': args.opt_min_lr,
         'betas': (args.opt_max_momentum, args.opt_rms),
@@ -102,25 +102,24 @@ def main():
         optimizer.load_state_dict(torch.load(args.prev_optimizer))
 
     # create the loss dictionary
-    losses = {}
-
-    losses['NLL'] = {}
-    losses['NLL']['function'] = HRpQCTEmbeddingNLLLoss(args.heaviside_epsilon)
-    losses['NLL']['coefficient'] = 1
-
-    losses['Curvature'] = {}
-    losses['Curvature']['function'] = \
-        HRpQCTEmbeddingCombinedRegularizationLoss(
-            CurvatureLoss(args.voxel_width, args.curvature_threshold, device)
-        )
-    losses['Curvature']['coefficient'] = args.lambda_curvature
-
-    losses['MagGrad'] = {}
-    losses['MagGrad']['function'] = \
-        HRpQCTEmbeddingCombinedRegularizationLoss(
-            MagnitudeGradientSDTLoss(args.voxel_width, device)
-        )
-    losses['MagGrad']['coefficient'] = args.lambda_maggrad
+    losses = {
+        "NLL": {
+            "function": HRpQCTEmbeddingNLLLoss(args.heaviside_epsilon),
+            "coefficient": 1.0
+        },
+        "Curvature": {
+            "function": HRpQCTEmbeddingCombinedRegularizationLoss(
+                CurvatureLoss(args.voxel_width, args.curvature_threshold, device)
+            ),
+            "coefficient": args.lambda_curvature
+        },
+        "MagGrad": {
+            "function": HRpQCTEmbeddingCombinedRegularizationLoss(
+                MagnitudeGradientSDTLoss(args.voxel_width, device)
+            ),
+            "coefficient": args.lambda_maggrad
+        }
+    }
 
     # create training dataset and dataloader kwargs dicts
     training_dataloader_kwargs = {
@@ -181,18 +180,21 @@ def main():
     # establish the list of fields to be logged
     log_fields = ['epoch', 'train/test', 'idx', 'name'] + list(testing_functions.keys())
 
-    # add all of the losses
+    # add all the losses
     for loss in losses.keys():
         log_fields.append(loss)
 
-    # add all of the testing functions
+    # add all the testing functions
     for testing_function in testing_functions.keys():
         log_fields.append(testing_function)
 
     # create the logger
     logger = Logger(log_filename, log_fields, args)
 
-    num_epochs = args.stopping_epoch if args.stopping_epoch else 2 * args.num_epochs_half_cycle + args.num_epochs_convergence + 1
+    num_epochs = (
+        args.stopping_epoch if args.stopping_epoch
+        else 2 * args.num_epochs_half_cycle + args.num_epochs_convergence + 1
+    )
 
     # train and validate
     for epoch in range(args.starting_epoch, num_epochs):
