@@ -8,7 +8,7 @@
 #SBATCH --partition=gpu-v100 --gres=gpu:2
 
 ####### Set environment variables ###############
-export PATH="~/software/miniconda3/bin:$PATH"
+export PATH="$HOME/software/miniconda3/bin:$PATH"
 
 ####### Run your script #########################
 source activate bl_torch
