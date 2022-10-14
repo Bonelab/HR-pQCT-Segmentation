@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
-#SBATCH --time=2:00:00
+#SBATCH --time=8:00:00
 #SBATCH --mem=80G
 
 ####### Set environment variables ###############
