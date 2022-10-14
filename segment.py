@@ -44,7 +44,7 @@ def create_parser():
         )
     )
     parser.add_argument(
-        "--image-pattern", "-ip", type=str, default="*_*_??.AIM", metavar="STR",
+        "--image-pattern", "-ip", type=str, default="*.AIM", metavar="STR",
         help="`glob`-compatible pattern to match to find your images in the directory"
     )
     parser.add_argument(

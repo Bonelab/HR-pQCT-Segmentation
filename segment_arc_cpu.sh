@@ -8,7 +8,7 @@ then
   echo "Argument 2: path to the directory that contains the images to segment, e.g. \`./data/images\`"
   echo "Argument 3: the label of the trained model to use to segment, e.g. \`radius_and_tibia_final\`"
   echo "--------------------"
-  echo "Example usage: ./segment_arc.sh blptl ./data/images radius_and_tibia_final"
+  echo "Example usage: ./segment_arc_cpu.sh bl_pytorch ./data/images radius_and_tibia_final"
   echo ""
   exit
 fi
