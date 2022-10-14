@@ -111,7 +111,7 @@ def main():
     ])
 
     # create dataset
-    dataset = HRpQCTAIMDataset(args.image_directory, transform=transforms, load_masks=False)
+    dataset = HRpQCTAIMDataset(args.image_directory, args.image_pattern, transform=transforms, load_masks=False)
     print(f"# images to be segmented: {len(dataset)}")
 
     # create kwargs for dataloader

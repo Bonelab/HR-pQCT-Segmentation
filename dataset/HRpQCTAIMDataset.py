@@ -10,10 +10,10 @@ from torch.utils.data import Dataset
 
 class HRpQCTAIMDataset(Dataset):
 
-    def __init__(self, data_dir, transform=None, load_masks=True):
+    def __init__(self, data_dir, data_pattern, transform=None, load_masks=True):
 
         # the image files should have the pattern <study>_<ID#>_<site_code>.AIM
-        image_file_list = glob(os.path.join(data_dir, '*_*_??.AIM'))
+        image_file_list = glob(os.path.join(data_dir, data_pattern))
 
         self.data = {
             'image': [],
