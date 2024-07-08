@@ -28,7 +28,7 @@ conda create -n bl_torch -c numerics88 -c simpleitk -c conda-forge -c pytorch py
 
 With lightning and jupyterlab (sub pytorch-gpu for pytorch if you want):
 ```
-conda create -n blptl -c numerics88 -c conda-forge pytorch torchvision h5py pytorch-lightning torchmetrics scikit-learn pandas scipy matplotlib jupyterlab n88tools vtk simpleitk scikit-image
+conda create -n bl_torch -c numerics88 -c conda-forge pytorch torchvision h5py pytorch-lightning torchmetrics scikit-learn pandas scipy matplotlib jupyterlab n88tools vtk simpleitk scikit-image
 ```
 
 4. Activate the environment.
@@ -43,6 +43,13 @@ cd Bonelab
 ```
 pip install -e .
 ```
+7. Clone this repo.
+```
+cd ~/Projects
+git clone git@github.com:Bonelab/HR-pQCT-Segmentation.git
+```
+
+Now you can run scripts from this repo from the cloned repo directory.
 
 ## 1.0 Segmenting AIMs
 
