@@ -48,6 +48,11 @@ def create_parser():
     )
 
     parser.add_argument(
+        "--data-pattern", type=str, default="*_??.AIM", metavar="STR",
+        help="pattern to match files in data directory"
+    )
+
+    parser.add_argument(
         '--trained-model', type=str, default='./trained_models/', metavar='STR',
         help='path of trained model'
     )
@@ -155,7 +160,12 @@ def main():
     ])
 
     # create dataset
-    dataset = HRpQCT_AIM_Dataset(args.data_dir, transform=data_transforms, load_masks=args.load_ref_masks)
+    dataset = HRpQCTAIMDataset(
+        args.data_dir,
+        args.data_pattern,
+        transform=data_transforms,
+        load_masks=args.load_ref_masks
+    )
 
     # create kwargs for dataloader
     dataloader_kwargs = {

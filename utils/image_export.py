@@ -10,6 +10,7 @@ import os
 import numpy as np
 import SimpleITK as sitk
 import vtk
+from vtk.util.numpy_support import numpy_to_vtk
 
 from datetime import datetime
 
@@ -47,10 +48,10 @@ def save_mask_as_AIM(
     lower_bounds = np.asarray(image_position) - np.asarray(mask_position)
 
     mask = mask[
-           lower_bounds[0]:(lower_bounds[0] + image_shape[0]),
-           lower_bounds[1]:(lower_bounds[1] + image_shape[1]),
-           lower_bounds[2]:(lower_bounds[2] + image_shape[2])
-           ]
+        lower_bounds[0]:(lower_bounds[0] + image_shape[0]),
+        lower_bounds[1]:(lower_bounds[1] + image_shape[1]),
+        lower_bounds[2]:(lower_bounds[2] + image_shape[2])
+    ]
 
     # append a message to the processing log explaining how and when this
     # mask was created
@@ -80,4 +81,30 @@ def save_mask_as_AIM(
         processing_log=processing_log
     )
 
+    writer.Update()
+
+
+def save_masks_as_niftis(
+    filename,
+    masks,
+    mask_position,
+    image_position,
+    image_shape,
+    vtk_image_data
+):
+    lower_bounds = np.asarray(image_position) - np.asarray(mask_position)
+
+    masks = masks[
+        lower_bounds[0]:(lower_bounds[0] + image_shape[0]),
+        lower_bounds[1]:(lower_bounds[1] + image_shape[1]),
+        lower_bounds[2]:(lower_bounds[2] + image_shape[2])
+    ]
+
+    writer = vtk.vtkNIFTIImageWriter()
+
+    writer.SetFileName(filename)
+    vtk_image_data.GetPointData().SetScalars(
+        numpy_to_vtk(num_array = masks.ravel(order = 'F'), deep = True)
+    )
+    writer.SetInputData(vtk_image_data)
     writer.Update()
