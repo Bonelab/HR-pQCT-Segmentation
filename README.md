@@ -6,7 +6,7 @@ Neeteson, N.J., Besler, B.A., Whittier, D.E. et al. Automatic segmentation of tr
 
 ## Model weights
 
-Zenodo: https://doi.org/10.5281/zenodo.14755838
+Zenodo: https://zenodo.org/records/14755838
 
 ## 0.0 Environment set-up
 
