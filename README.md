@@ -4,6 +4,10 @@
 
 Neeteson, N.J., Besler, B.A., Whittier, D.E. et al. Automatic segmentation of trabecular and cortical compartments in HR-pQCT images using an embedding-predicting U-Net and morphological post-processing. Sci Rep 13, 252 (2023). https://doi.org/10.1038/s41598-022-27350-0
 
+## Model weights
+
+Zenodo: https://doi.org/10.5281/zenodo.14755838
+
 ## 0.0 Environment set-up
 
 1. Go to Projects directory (or wherever you store git repos).
