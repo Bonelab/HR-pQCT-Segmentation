@@ -70,7 +70,7 @@ def save_mask_as_AIM(
     spacing = [float(spacing[0]), float(spacing[1]), float(spacing[2])]
     origin = [float(origin[0]), float(origin[1]), float(origin[2])]
 
-    mask_vtkImageData = numpy_to_vtkImageData(127 * mask, spacing=spacing, origin=origin, array_type=vtk.VTK_CHAR)
+    mask_vtkImageData = numpy_to_vtkImageData(127 * mask, spacing=spacing, origin=origin, array_type=vtk.VTK_SIGNED_CHAR)
 
     writer = get_vtk_writer(filename)
     if writer is None:
