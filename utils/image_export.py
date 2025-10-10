@@ -45,12 +45,17 @@ def save_mask_as_AIM(
     # if this fails then something else has gone wrong
 
     lower_bounds = np.asarray(image_position) - np.asarray(mask_position)
+    # Added 10-10-2024: ensure that both lower bounds and image shape are scalars
+    # This fixes the error:
+    # TypeError: Concatenation operation is not implemented for NumPy arrays, use np.concatenate() instead.
+    lower_bounds = lower_bounds.astype(int)
+    image_shape = np.asarray(image_shape).astype(int)
 
     mask = mask[
-           lower_bounds[0]:(lower_bounds[0] + image_shape[0]),
-           lower_bounds[1]:(lower_bounds[1] + image_shape[1]),
-           lower_bounds[2]:(lower_bounds[2] + image_shape[2])
-           ]
+        int(lower_bounds[0]):int(lower_bounds[0] + image_shape[0]),
+        int(lower_bounds[1]):int(lower_bounds[1] + image_shape[1]),
+        int(lower_bounds[2]):int(lower_bounds[2] + image_shape[2])
+    ]
 
     # append a message to the processing log explaining how and when this
     # mask was created

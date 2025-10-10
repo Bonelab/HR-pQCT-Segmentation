@@ -214,7 +214,7 @@ def extract_bone(image, threshold=-0.25):
 
     bone_mask = image >= threshold
 
-    bone_mask = median(bone_mask, selem=np.ones((3, 3, 1)))
+    bone_mask = median(bone_mask, footprint=np.ones((3, 3, 1)))
 
     bone_mask = remove_islands_from_mask(bone_mask, erosion_dilation=3)
 
