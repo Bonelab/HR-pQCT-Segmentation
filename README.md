@@ -22,12 +22,12 @@ git clone https://github.com/Bonelab/Bonelab.git
 
 With GPU:
 ```
-conda create -n bl_torch -c numerics88 -c simpleitk -c conda-forge -c pytorch python=3.7 n88tools pbr nose six simpleitk pydicom gdcm pytorch-gpu torchvision scikit-image
+conda create -n bl_torch -c numerics88 -c simpleitk -c conda-forge -c pytorch python=3.12 n88tools pbr nose six simpleitk pydicom gdcm pytorch-gpu torchvision scikit-image
 ```
 
 Without GPU:
 ```
-conda create -n bl_torch -c numerics88 -c simpleitk -c conda-forge -c pytorch python=3.7 n88tools pbr nose six simpleitk pydicom gdcm pytorch torchvision scikit-image
+conda create -n bl_torch -c numerics88 -c simpleitk -c conda-forge -c pytorch python=3.12 n88tools pbr nose six simpleitk pydicom gdcm pytorch torchvision scikit-image
 ```
 
 With lightning and jupyterlab (sub pytorch-gpu for pytorch if you want):
