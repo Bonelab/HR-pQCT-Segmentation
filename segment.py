@@ -22,7 +22,7 @@ from dataset.HRpQCTAIMDataset import HRpQCTAIMDataset
 
 from traintest.infer import infer
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 
 def create_parser():
@@ -52,6 +52,10 @@ def create_parser():
         help="subdirectory, inside of `image-directory`, to save the masks to"
     )
     parser.add_argument(
+        "--output-directory", "-o", type=str, default=None, metavar="DIR",
+        help="optional output directory for masks (if not specified, masks will be saved in the image directory)"
+    )
+    parser.add_argument(
         "--cuda", "-c", action="store_true",
         help="enable this flag to use CUDA / GPU"
     )
@@ -70,10 +74,10 @@ def main():
         print("WARNING: cuda flag was set, but cuda is not available! using cpu...")
 
     # create the masks' subdirectory if it doesn't already exist
-    try:
-        os.mkdir(os.path.join(args.image_directory, args.masks_subdirectory))
-    except FileExistsError:
-        pass  # if the directory already exists, that's fine
+    # define output directory
+    # If output directory is specified, use that. Otherwise, use image directory/masks_subdirectory
+    output_directory = args.output_directory if args.output_directory else os.path.join(args.image_directory, args.masks_subdirectory)
+    os.makedirs(output_directory, exist_ok=True)
 
     # load the hyperparameters from the training run
     hyperparameters_file = os.path.join(".", "trained_models", f"{args.model_label}.yaml")
@@ -163,7 +167,7 @@ def main():
         print("- writing cortical mask to file... ", end="")
         start_time = timer()
         save_mask_as_AIM(
-            os.path.join(args.image_directory, args.masks_subdirectory, f"{image_name}_CORT_MASK.AIM"),
+            os.path.join(output_directory, f"{image_name}_CORT_MASK.AIM"),
             cort_mask,
             image['image_position'],
             image['image_position_original'],
@@ -180,7 +184,7 @@ def main():
         print("- writing trabecular mask to file... ", end="")
         start_time = timer()
         save_mask_as_AIM(
-            os.path.join(args.image_directory, args.masks_subdirectory, f"{image_name}_TRAB_MASK.AIM"),
+            os.path.join(output_directory, f"{image_name}_TRAB_MASK.AIM"),
             trab_mask,
             image['image_position'],
             image['image_position_original'],
