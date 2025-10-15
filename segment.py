@@ -1,6 +1,7 @@
 import os
 import torch
 import yaml
+import json
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from glob import glob
@@ -56,12 +57,30 @@ def create_parser():
         help="optional output directory for masks (if not specified, masks will be saved in the image directory)"
     )
     parser.add_argument(
+        "--enable-progress", "-ep", action="store_true", default=False,
+        help="enable machine-readable progress output (for integration with other software)"
+    )
+    parser.add_argument(
         "--cuda", "-c", action="store_true",
         help="enable this flag to use CUDA / GPU"
     )
 
     return parser
 
+def print_progress(status, image=None, step=None, current_step=None, total_steps=None, current_image=None, total_images=None, message=None, enabled=False):
+    if not enabled:
+        return
+    progress_data = {
+        "status": status,                   # e.g. "start", "step", "done", "error"
+        "image": image,                     # image name
+        "step": step,                       # e.g. "predicting_embeddings"
+        "current_step": current_step,       # current step index (1-based)
+        "total_steps": total_steps,         # total steps
+        "current_image": current_image,     # current image index (1-based)
+        "total_images": total_images,       # total images
+        "message": message
+    }
+    print(json.dumps({k: v for k, v in progress_data.items() if v is not None}), flush=True)
 
 def main():
     # parse the arguments
@@ -135,14 +154,19 @@ def main():
 
     # create the overall dataloader
     dataloader = DataLoader(dataset, **dataloader_kwargs)
-
-    for image in dataloader:
+    
+    enable_progress = args.enable_progress
+    total_images = len(dataloader)
+    total_steps = 7  # start, predicting embeddings, converting to masks, post-processing, saving masks (cortical and trabecular), end
+    for idx, image in enumerate(dataloader, 1):
         # extract the name of the image
         image_name = os.path.splitext(image['name'][0])[0]
         print(f"Segmenting {image_name}...")
+        print_progress("start", image=image_name, step=f"Segmenting {image_name}", current_image=idx, total_images=total_images, current_step=1, total_steps=total_steps, enabled=enable_progress)
         # and extract the image data for use in post-processing
         image_data = image['image'][0, 0, :, :, :].cpu().detach().numpy()
         # get the embeddings from the model
+        print_progress("step", image=image_name, step=f"Predicting embeddings for {image_name}", current_image=idx, total_images=total_images, current_step=2, total_steps=total_steps, enabled=enable_progress)
         print("- predicting embeddings... ", end="")
         start_time = timer()
         phi_peri, phi_endo = infer(
@@ -151,12 +175,14 @@ def main():
         )
         print(f"done! ({timer()-start_time:0.3f} s)")
         # convert embeddings to masks
+        print_progress("step", image=image_name, step=f"Converting embeddings to masks for {image_name}", current_image=idx, total_images=total_images, current_step=3, total_steps=total_steps, enabled=enable_progress)
         print("- converting embeddings to masks... ", end="")
         start_time = timer()
         cort_mask = (phi_peri < 0) * (phi_endo > 0)
         trab_mask = phi_endo < 0
         print(f"done! ({timer()-start_time:0.3f} s)")
         # post-process masks
+        print_progress("step", image=image_name, step=f"Post-processing masks for {image_name}", current_image=idx, total_images=total_images, current_step=4, total_steps=total_steps, enabled=enable_progress)
         print("- post-processing masks... ", end="")
         start_time = timer()
         cort_mask, trab_mask = postprocess_masks_iterative(
@@ -164,6 +190,7 @@ def main():
         )
         print(f"done! ({timer()-start_time:0.3f} s)")
         # save the cortical mask
+        print_progress("step", image=image_name, step=f"Saving cortical mask for {image_name}", current_image=idx, total_images=total_images, current_step=5, total_steps=total_steps, enabled=enable_progress)
         print("- writing cortical mask to file... ", end="")
         start_time = timer()
         save_mask_as_AIM(
@@ -181,6 +208,7 @@ def main():
         )
         print(f"done! ({timer()-start_time:0.3f} s)")
         # save the trabecular mask
+        print_progress("step", image=image_name, step=f"Saving trabecular mask for {image_name}", current_image=idx, total_images=total_images, current_step=6, total_steps=total_steps, enabled=enable_progress)
         print("- writing trabecular mask to file... ", end="")
         start_time = timer()
         save_mask_as_AIM(
@@ -197,6 +225,7 @@ def main():
             VERSION
         )
         print(f"done! ({timer()-start_time:0.3f} s)")
+        print_progress("step", image=image_name, step=f"Done processing {image_name}", current_image=idx, total_images=total_images, current_step=7, total_steps=total_steps, enabled=enable_progress)
 
 
 if __name__ == "__main__":
